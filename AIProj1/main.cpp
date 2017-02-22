@@ -175,6 +175,10 @@ int main()
         }
         items = cur;
         printsack(sack1, items);
+        int totsumsum = 0;
+        for(int i=0; i<items; i++)
+            totsumsum+=sack1.costs[i];
+        cout<<"TOTAL COST ALL ITEMS = "<<totsumsum<<endl;
     //do phase 1
         
         //calculate the ratios
@@ -249,7 +253,7 @@ int main()
                 miniitems++;
             }
         }
-        cout<<"results from greedy highest value first:\n";
+        cout<<"results from greedy highest ratio first:\n";
         printsack(minisack, miniitems);
         
         
