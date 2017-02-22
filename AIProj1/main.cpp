@@ -191,6 +191,7 @@ int main()
         sack minisack;
         int miniitems=0;
         init_sack(minisack, items);
+        greedy(items, &sack1, capacity, master);
         for(int i=0; i<items; i++)
         {
             if(master[i])
@@ -202,6 +203,11 @@ int main()
                 miniitems++;
             }
         }
+        cout<<"results from greedy low cost first:\n";
+        printsack(minisack, miniitems);
+        
+        
+        
         
         for(int i=0; i<items; i++)//temp flip the values to sort descending (transform & conquer)
             sack1.values[i] *= -1;
@@ -210,16 +216,48 @@ int main()
             sack1.values[i] *= -1;
         cout<<"sorted by highest value first:\n";
         printsack(sack1, items);
+        greedy(items, &sack1, capacity, master);
+        miniitems=0;
+        for(int i=0; i<items; i++)
+        {
+            if(master[i])
+            {
+                minisack.names[miniitems]=sack1.names[i];
+                minisack.costs[miniitems]=sack1.costs[i];
+                minisack.values[miniitems]=sack1.values[i];
+                minisack.ratios[miniitems]=sack1.ratios[i];
+                miniitems++;
+            }
+        }
+        cout<<"results from greedy highest value first:\n";
+        printsack(minisack, miniitems);
+
         
         ShellSort4ByDoubleDescending(sack1.names, sack1.costs, sack1.values, sack1.ratios, items);
         cout<<"sorted by highest ratio first:\n";
         printsack(sack1,items);
+        greedy(items, &sack1, capacity, master);
+        miniitems=0;
+        for(int i=0; i<items; i++)
+        {
+            if(master[i])
+            {
+                minisack.names[miniitems]=sack1.names[i];
+                minisack.costs[miniitems]=sack1.costs[i];
+                minisack.values[miniitems]=sack1.values[i];
+                minisack.ratios[miniitems]=sack1.ratios[i];
+                miniitems++;
+            }
+        }
+        cout<<"results from greedy highest value first:\n";
+        printsack(minisack, miniitems);
         
         
     //end phase 1
         
         
         destroy(sack1);
+        destroy(minisack);
         delete [] master;
         
         fin.close();
