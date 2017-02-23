@@ -34,28 +34,77 @@ void destroy(sack& s)
 }
 void greedy(int n, sack* s, int maxweight, bool* masterlist)
 {
+    cout<<"doing greedy, "<<n<<"items, max weight = "<<maxweight<<"\n";
+    for(int i=0; i<n; i++)
+    {
+        masterlist[i] = false;
+    }
     //s is ordered in descending usefulness
     int tolwt=0;
     int tolval=0;
     //initially sack is empty
     for(int i=0; i<n; i++)
     {
-        tolwt+=s->costs[i];//try adding current item to sack or skip
+  //      cout<<"trying "<<s->names[i]<<", ";
+        tolwt += s->costs[i];//try adding current item to sack or skip
         if(tolwt <= maxweight)
         {
+  //          cout<<"success\n";
             tolval += s->values[i];
             masterlist[i] = true;
         }
         else
-            tolwt -= maxweight;
+        {
+  //          cout<<"failed\n";
+            tolwt -= s->costs[i];
+        }
     }
+    cout<<"weight after greedy: "<<tolwt;
 }
-void partial(int n, sack* s, int maxweight)
+bool partial(int n, sack* s, int maxweight, bool* masterlist, double& pct, int &extraspot)
 {
-    
+    for(int i=0; i<n; i++)
+    {
+        masterlist[i] = false;
+    }
+    //s is ordered in descending usefulness
+    int tolwt=0;
+    double tolval=0;
+    //initially sack is empty
+    for(int i=0; i<n; i++)
+    {
+        tolwt+=s->costs[i];//try adding current item to sack or else if not underweight
+        if(tolwt < maxweight)
+        {
+            tolval += s->values[i];
+            masterlist[i] = true;
+        }
+        else //not underweight
+        {
+            int wtgap = tolwt - maxweight;
+            if (wtgap != 0) //overweight
+            {
+                tolwt -= s->costs[i];
+                wtgap = maxweight - tolwt;
+                int partial = s->costs[i];//give partial i's cost
+                pct = (double) wtgap / (double) partial; //ratio is gap/partial
+                extraspot = i;
+                return true;
+            }
+            else//perfect fit
+            {
+                return false;
+            }
+        }
+    }
+    return false;
 }
 void brute(int cur, int n, sack* s, int weight, int value, int maxweight, bool* list, bool* masterlist, int &bestval)
 {
+    //cur is current spot in the bool list simulated tree
+    //n is total length of tree
+    //list is
+    
     //check cur vs int
     if(cur>=n)
         return;
@@ -66,16 +115,10 @@ void brute(int cur, int n, sack* s, int weight, int value, int maxweight, bool* 
     //include current
     weight += s->costs[cur];
     value += s->values[cur];
-    
-    //if overweight then break branch
-    if(weight <= maxweight)
-        return;
-    
-    //not underweight,
     list[cur]=true;
     
-    //current value is better than best value seen,
-    if(value > bestval)
+    //current value is better than best value seen and valid weight
+    if(value > bestval && weight <= maxweight)
     {
         bestval = value;
         for(int i=0; i<n; i++)
@@ -121,10 +164,16 @@ void exhaustive(int cur, int n, sack* s, int weight, int value, int maxweight, b
 void printsack(sack s, int n)
 {
     cout<<"SACK_BEGIN\n";
+    int weight = 0;
+    int value = 0;
     for(int i=0; i<n; i++)
     {
+        weight += s.costs[i];
+        value += s.values[i];
         cout<<s.names[i]<<","<<s.costs[i]<<","<<s.values[i]<<','<<s.ratios[i]<<endl;
     }
+    cout<<"TOTAL WEIGHT: "<<weight<<endl;
+    cout<<"TOTAL VALUE: "<<value <<endl;
     cout<<"/SACK_END\n\n";
 }
 int main()
@@ -188,10 +237,10 @@ int main()
         }
         
         printsack(sack1, items);
-        
+        //begin low cost
         ShellSort4ByFirstInt(sack1.names, sack1.costs, sack1.values, sack1.ratios, items);
-        cout<<"sorted by lowest cost first:\n";
-        printsack(sack1, items);
+//        cout<<"sorted by lowest cost first:\n";
+//        printsack(sack1, items);
         sack minisack;
         int miniitems=0;
         init_sack(minisack, items);
@@ -207,19 +256,20 @@ int main()
                 miniitems++;
             }
         }
+        ShellSort4ByName(minisack.names, minisack.costs, minisack.values, minisack.ratios, miniitems);
         cout<<"results from greedy low cost first:\n";
         printsack(minisack, miniitems);
         
         
         
-        
+        //begin highest val
         for(int i=0; i<items; i++)//temp flip the values to sort descending (transform & conquer)
             sack1.values[i] *= -1;
         ShellSort4ByFirstInt(sack1.names, sack1.values, sack1.costs, sack1.ratios, items);
         for(int i=0; i<items; i++)//unflip
             sack1.values[i] *= -1;
-        cout<<"sorted by highest value first:\n";
-        printsack(sack1, items);
+//        cout<<"sorted by highest value first:\n";
+//        printsack(sack1, items);
         greedy(items, &sack1, capacity, master);
         miniitems=0;
         for(int i=0; i<items; i++)
@@ -233,13 +283,15 @@ int main()
                 miniitems++;
             }
         }
+        ShellSort4ByName(minisack.names, minisack.costs, minisack.values, minisack.ratios, miniitems);
         cout<<"results from greedy highest value first:\n";
         printsack(minisack, miniitems);
 
         
+        //begin highest ratio
         ShellSort4ByDoubleDescending(sack1.names, sack1.costs, sack1.values, sack1.ratios, items);
-        cout<<"sorted by highest ratio first:\n";
-        printsack(sack1,items);
+//        cout<<"sorted by highest ratio first:\n";
+//        printsack(sack1,items);
         greedy(items, &sack1, capacity, master);
         miniitems=0;
         for(int i=0; i<items; i++)
@@ -253,10 +305,39 @@ int main()
                 miniitems++;
             }
         }
+        ShellSort4ByName(minisack.names, minisack.costs, minisack.values, minisack.ratios, miniitems);
         cout<<"results from greedy highest ratio first:\n";
         printsack(minisack, miniitems);
         
-        
+        //begin partial
+        double pct;
+        int exindex;
+        if(partial(items, &sack1, capacity, master, pct, exindex))
+        {
+            miniitems=0;//fill mini sack
+            for(int i=0; i<items; i++)
+            {
+                if(master[i])
+                {
+                    minisack.names[miniitems]=sack1.names[i];
+                    minisack.costs[miniitems]=sack1.costs[i];
+                    minisack.values[miniitems]=sack1.values[i];
+                    minisack.ratios[miniitems]=sack1.ratios[i];
+                    miniitems++;
+                }
+            }
+            cout<<"Results from partial sack:\n";
+            ShellSort4ByName(minisack.names, minisack.costs, minisack.values, minisack.ratios, miniitems);
+            printsack(minisack, miniitems);
+
+            cout<<", plus "<< pct << "of "<<sack1.names[exindex]<<"("<<pct * (double)sack1.values[exindex]<<")";
+        }
+        else
+        {
+            cout<<"No partial sack, perfect fit. Results:\n";
+            ShellSort4ByName(minisack.names, minisack.costs, minisack.values, minisack.ratios, miniitems);
+            printsack(minisack, miniitems);
+        }
     //end phase 1
         
         

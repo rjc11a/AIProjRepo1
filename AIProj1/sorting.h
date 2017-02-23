@@ -9,6 +9,40 @@
 #ifndef sorting_h
 #define sorting_h
 
+bool operator<(string a, string b)
+{
+    if(a == b)
+        return false;
+    int adex=0, bdex=0;
+    {
+        while(a[adex] !=0 && b[bdex] != 0)
+        {
+            if(a[adex] < b[bdex])
+                return true;
+            if(b[bdex] > a[adex])
+                return false;
+            adex++;
+            bdex++;
+        }
+        if(adex == 0)
+            return true;
+        return false;
+    }
+    return false;
+}
+bool operator>(string a, string b)
+{
+    return (b<a);
+}
+bool operator<=(string a, string b) // a <= b
+{
+    return !(a > b);
+}
+
+bool operator>=(string a, string b)
+{
+    return !(a<b);
+}
 //bubble
 
 template <typename T>
