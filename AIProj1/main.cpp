@@ -12,6 +12,7 @@
 using namespace std;
 #include <fstream>
 #include "sorting.h"
+#include <iomanip>
 
 struct sack{
     string * names;
@@ -25,6 +26,35 @@ void init_sack(sack &s, int n){
     s.values = new int[n];
     s.ratios = new double[n];
 }
+int valueofsack(sack* a, int n)
+{
+    int tot = 0;
+    for(int i=0; i<n; i++)
+    {
+        tot += a->values[i];
+    }
+    return tot;
+}
+void copylefttoright(sack * a, sack * b, int n)
+{
+    
+}
+void filterlefttoright(sack* a,int items, sack* b, int& miniitems, bool* master)
+{
+    miniitems = 0;
+    for(int i=0; i<items; i++)
+    {
+        if(master[i])
+        {
+            b->names[miniitems]=a->names[i];
+            b->costs[miniitems]=a->costs[i];
+            b->values[miniitems]=a->values[i];
+            b->ratios[miniitems]=a->ratios[i];
+            miniitems++;
+        }
+    }
+}
+
 void destroy(sack& s)
 {
     delete [] s.names;
@@ -178,14 +208,62 @@ void printsack(sack s, int n)
     cout<<"TOTAL VALUE: "<<value <<endl;
     cout<<"/SACK_END\n\n";
 }
+string printsack2(sack s, int n)
+{
+    //print cost and items
+    int val=0;
+    int cst=0;
+    for(int i=0; i<n; i++)
+    {
+        val += s.values[i];
+        cst += s.costs[i];
+    }
+    string start = "value: ";
+    start += to_string(val);
+    start += ", cost: ";
+    start += to_string(cst);
+    start += ", items: ";
+    start += s.names[0];
+    for(int i=1; i<n; i++)
+    {
+        start += ", ";
+        start += s.names[i];
+    }
+    return start;
+}
+string printsack3(sack s, int n, double d, int c)
+{
+    //print cost and items
+    double val=0;
+    for(int i=0; i<n; i++)
+    {
+        val += s.values[i];
+    }
+    val += d;
+    int realval = val;
+    string start = "value: ";
+    start += to_string(realval);
+    start += ", cost: ";
+    start += to_string(c);
+    start += ", items: ";
+    start += s.names[0];
+    for(int i=1; i<n; i++)
+    {
+        start += ", ";
+        start += s.names[i];
+    }
+    return start;
+}
 int main()
 {
-    
+    string out1="1. ",out2="",out3="",out4="",out5="",out6="",out7="";
     string filename, bigline; int items,capacity; sack sack1;
-    bool * master;
+    bool * master, doingbruteforce;
     ifstream fin;
+    ofstream fout;
     cout<<"enter filename: ";
     cin>>filename;
+    out1 += filename;
     fin.open(filename.c_str());
     if(fin.is_open())
     {
@@ -194,7 +272,10 @@ int main()
         int cur = 0;
         string sto="";
         getline(fin,sto);
+        out2 = "2. ";
+        out2+=sto;
         capacity = stoi(sto);
+        
         while(!fin.eof())
         {
             getline(fin,bigline);
@@ -230,13 +311,20 @@ int main()
         for(int i=0; i<items; i++)
             totsumsum+=sack1.costs[i];
         cout<<"TOTAL COST ALL ITEMS = "<<totsumsum<<endl;
+        string yesorno;
+        
+        //check if doing brute force
+        cout<<"\nThis file has "<<items<<" items. Include brute force method? (y/n)";
+        cin>>yesorno;
+        if(yesorno == "y")
+            doingbruteforce=true;
+        else
+            doingbruteforce=false;
         
         
-        sack minisack;
-        int miniitems=0;
-        init_sack(minisack, items);
-    //do phase 1
-        /*
+        
+    //do phase 1: greedy low cost, high val, high ratio
+        
         //calculate the ratios
         for(int i=0; i<items; i++)
         {
@@ -244,29 +332,34 @@ int main()
         }
         
         printsack(sack1, items);
+        
+        
+        int lcval, hvval, hrval;
         //begin low cost
         ShellSort4ByFirstInt(sack1.names, sack1.costs, sack1.values, sack1.ratios, items);
 //        cout<<"sorted by lowest cost first:\n";
 //        printsack(sack1, items);
-        sack minisack;
-        int miniitems=0;
-        init_sack(minisack, items);
-        greedy(items, &sack1, capacity, master);
-        for(int i=0; i<items; i++)
-        {
-            if(master[i])
-            {
-                minisack.names[miniitems]=sack1.names[i];
-                minisack.costs[miniitems]=sack1.costs[i];
-                minisack.values[miniitems]=sack1.values[i];
-                minisack.ratios[miniitems]=sack1.ratios[i];
-                miniitems++;
-            }
-        }
-        ShellSort4ByName(minisack.names, minisack.costs, minisack.values, minisack.ratios, miniitems);
-        cout<<"results from greedy low cost first:\n";
-        printsack(minisack, miniitems);
         
+        sack lowcostsack;
+        int lowcostitems;
+        init_sack(lowcostsack, items);
+        greedy(items, &sack1, capacity, master);
+        filterlefttoright(&sack1, items, &lowcostsack, lowcostitems, master);
+//        for(int i=0; i<items; i++)
+//        {
+//            if(master[i])
+//            {
+//                minisack.names[miniitems]=sack1.names[i];
+//                minisack.costs[miniitems]=sack1.costs[i];
+//                minisack.values[miniitems]=sack1.values[i];
+//                minisack.ratios[miniitems]=sack1.ratios[i];
+//                miniitems++;
+//            }
+//        }
+        ShellSort4ByName(lowcostsack.names, lowcostsack.costs, lowcostsack.values, lowcostsack.ratios, lowcostitems);
+        cout<<"results from greedy low cost first:\n";
+        printsack(lowcostsack, lowcostitems);
+        lcval = valueofsack(&lowcostsack, lowcostitems);
         
         
         //begin highest val
@@ -277,99 +370,130 @@ int main()
             sack1.values[i] *= -1;
 //        cout<<"sorted by highest value first:\n";
 //        printsack(sack1, items);
+        sack highvalsack;
+        int highvalitems;
+        init_sack(highvalsack, items);
         greedy(items, &sack1, capacity, master);
-        miniitems=0;
-        for(int i=0; i<items; i++)
-        {
-            if(master[i])
-            {
-                minisack.names[miniitems]=sack1.names[i];
-                minisack.costs[miniitems]=sack1.costs[i];
-                minisack.values[miniitems]=sack1.values[i];
-                minisack.ratios[miniitems]=sack1.ratios[i];
-                miniitems++;
-            }
-        }
-        ShellSort4ByName(minisack.names, minisack.costs, minisack.values, minisack.ratios, miniitems);
+        filterlefttoright(&sack1, items, &highvalsack, highvalitems, master);
+        
+        ShellSort4ByName(highvalsack.names, highvalsack.costs, highvalsack.values, highvalsack.ratios, highvalitems);
         cout<<"results from greedy highest value first:\n";
-        printsack(minisack, miniitems);
-
+        printsack(highvalsack, highvalitems);
+        hvval = valueofsack(&highvalsack, highvalitems);
         
         //begin highest ratio
         ShellSort4ByDoubleDescending(sack1.names, sack1.costs, sack1.values, sack1.ratios, items);
 //        cout<<"sorted by highest ratio first:\n";
 //        printsack(sack1,items);
-        greedy(items, &sack1, capacity, master);
-        miniitems=0;
-        for(int i=0; i<items; i++)
-        {
-            if(master[i])
-            {
-                minisack.names[miniitems]=sack1.names[i];
-                minisack.costs[miniitems]=sack1.costs[i];
-                minisack.values[miniitems]=sack1.values[i];
-                minisack.ratios[miniitems]=sack1.ratios[i];
-                miniitems++;
-            }
-        }
-        ShellSort4ByName(minisack.names, minisack.costs, minisack.values, minisack.ratios, miniitems);
-        cout<<"results from greedy highest ratio first:\n";
-        printsack(minisack, miniitems);
         
+        sack highratsack;
+        int highratitems;
+        init_sack(highratsack, items);
+        greedy(items, &sack1, capacity, master);
+        filterlefttoright(&sack1, items, &highratsack, highratitems, master);
+        
+        
+        ShellSort4ByName(highratsack.names, highratsack.costs, highratsack.values, highratsack.ratios, highratitems);
+        cout<<"results from greedy highest ratio first:\n";
+        printsack(highratsack, highratitems);
+        hrval = valueofsack(&highratsack, highratitems);
         //begin partial
+//        sack partialsack;
+//        int partialitems;
+//        init_sack(partialsack, items);
+//        greedy(items, &sack1, capacity, master);
+//        filterlefttoright(&sack1, items, &highratsack, highratitems, master);
+        
         double pct;
         int exindex;
         if(partial(items, &sack1, capacity, master, pct, exindex))
         {
-            miniitems=0;//fill mini sack
-            for(int i=0; i<items; i++)
-            {
-                if(master[i])
-                {
-                    minisack.names[miniitems]=sack1.names[i];
-                    minisack.costs[miniitems]=sack1.costs[i];
-                    minisack.values[miniitems]=sack1.values[i];
-                    minisack.ratios[miniitems]=sack1.ratios[i];
-                    miniitems++;
-                }
-            }
-            cout<<"Results from partial sack:\n";
-            ShellSort4ByName(minisack.names, minisack.costs, minisack.values, minisack.ratios, miniitems);
-            printsack(minisack, miniitems);
-
-            cout<<", plus "<< pct << "of "<<sack1.names[exindex]<<"("<<pct * (double)sack1.values[exindex]<<")";
+            sack partialsack;
+            int partialitems;
+            init_sack(partialsack, items);
+            filterlefttoright(&sack1, items, &partialsack, partialitems, master);
+            out4 = "4. Results from partial sack:\n";
+            ShellSort4ByName(partialsack.names, partialsack.costs, partialsack.values, partialsack.ratios, partialitems);
+            
+            out4 += printsack3(partialsack, partialitems, pct * (double)sack1.values[exindex], capacity);
+            
+            out4 +=", plus ";
+            int inthere = pct * 100;
+            out4 += to_string(inthere);
+            out4 += "% of ";
+            out4 += sack1.names[exindex];
+           // cout<<", plus "<< pct << "of "<<sack1.names[exindex]<<"("<<pct * (double)sack1.values[exindex]<<")";
+            
+            destroy(partialsack);
         }
         else
         {
-            cout<<"No partial sack, perfect fit. Results:\n";
-            ShellSort4ByName(minisack.names, minisack.costs, minisack.values, minisack.ratios, miniitems);
-            printsack(minisack, miniitems);
+            cout<<"No partial sack, perfect fit.\n";
+            sack partialsack;
+            int partialitems;
+            init_sack(partialsack, items);
+            filterlefttoright(&sack1, items, &partialsack, partialitems, master);
+            out4 = "Results from partial sack:\n";
+            ShellSort4ByName(partialsack.names, partialsack.costs, partialsack.values, partialsack.ratios, partialitems);
+            out4 += printsack2(partialsack, partialitems);
+            
+            destroy(partialsack);
+
         }
     //end phase 1
-        */
+        out3 = "";//best greedy min boundary
+        if(lcval >= hvval && lcval >= hrval)//lcval largest of the 3
+        {
+            out3 += "3. The greedy min boundary is the low-cost first method.\n";
+            out3 += printsack2(lowcostsack, lowcostitems);
+        }
+        else if(hvval >= lcval && hvval >= hrval)//hvval (high value sack) largest of the 3
+        {
+            out3 += "3. The greedy min boundary is the high-value first method.\n";
+            out3 += printsack2(highvalsack, highvalitems);
+
+        }
+        else//hrval is either largest or not less than the others
+        {
+            out3 += "3. The greedy min boundary is the high-ratio first method.\n";
+            out3 += printsack2(highratsack, highratitems);
+        }
+        cout<<"p1 done, greedy thing on next line:\n"<<out3<<endl;
         bool * state = new bool[200];
+        
+        
         int best = 0;
-        brute(0, items, &sack1, 0, 0, capacity, state, master, best);
-        miniitems=0;//fill mini sack
         for(int i=0; i<items; i++)
         {
-            if(master[i])
-            {
-                minisack.names[miniitems]=sack1.names[i];
-                minisack.costs[miniitems]=sack1.costs[i];
-                minisack.values[miniitems]=sack1.values[i];
-                minisack.ratios[miniitems]=sack1.ratios[i];
-                miniitems++;
-            }
+            state[i] = false;
+            master[i] = false;
         }
-        cout<<"results from brute force:"<<endl;
-        printsack(minisack,miniitems);
+        if(doingbruteforce == true)
+        {
+            brute(0, items, &sack1, 0, 0, capacity, state, master, best);
+            
+            sack brutesack;
+            int bruteitems=0;
+            init_sack(brutesack, items);
+            filterlefttoright(&sack1, items, &brutesack, bruteitems, master);
+            
+            ShellSort4ByName(brutesack.names, brutesack.costs, brutesack.values, brutesack.ratios, bruteitems);
+            cout<<"results from brute force:"<<endl;
+            printsack(brutesack,bruteitems);
+            
+            
+            destroy(brutesack);
+        }
         
         destroy(sack1);
-        destroy(minisack);
+        destroy(lowcostsack);
+        destroy(highvalsack);
+        destroy(highratsack);
+
         delete [] master;
-        
+        delete [] state;
         fin.close();
+        cout<<endl<<out1<<endl<<out2<<endl<<out3<<endl<<out4<<endl<<out5<<endl<<out6<<endl<<out7<<endl;
     }
     else
         cout<<"failed to open file.\n";
