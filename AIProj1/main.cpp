@@ -101,7 +101,7 @@ bool partial(int n, sack* s, int maxweight, bool* masterlist, double& pct, int &
 }
 void brute(int cur, int n, sack* s, int weight, int value, int maxweight, bool* list, bool* masterlist, int &bestval)
 {
-    //cur is current spot in the bool list simulated tree
+    //cur is current spot in the bool list simulated tree, initially called with 0
     //n is total length of tree
     //list is
     
@@ -127,6 +127,7 @@ void brute(int cur, int n, sack* s, int weight, int value, int maxweight, bool* 
         }
     }
     brute(cur+1,n,s,weight,value, maxweight,list,masterlist,bestval);
+    list[cur]=false;
 }
 
 void exhaustive(int cur, int n, sack* s, int weight, int value, int maxweight, bool* list, bool* masterlist, int &bestval)
@@ -159,6 +160,7 @@ void exhaustive(int cur, int n, sack* s, int weight, int value, int maxweight, b
         }
     }
     exhaustive(cur+1,n,s,weight,value, maxweight,list,masterlist,bestval);
+    list[cur] = false;
 }
 
 void printsack(sack s, int n)
@@ -188,7 +190,7 @@ int main()
     if(fin.is_open())
     {
         init_sack(sack1, 200);
-        master = new bool[items];
+        master = new bool[200];
         int cur = 0;
         string sto="";
         getline(fin,sto);
@@ -228,8 +230,13 @@ int main()
         for(int i=0; i<items; i++)
             totsumsum+=sack1.costs[i];
         cout<<"TOTAL COST ALL ITEMS = "<<totsumsum<<endl;
-    //do phase 1
         
+        
+        sack minisack;
+        int miniitems=0;
+        init_sack(minisack, items);
+    //do phase 1
+        /*
         //calculate the ratios
         for(int i=0; i<items; i++)
         {
@@ -339,7 +346,24 @@ int main()
             printsack(minisack, miniitems);
         }
     //end phase 1
-        
+        */
+        bool * state = new bool[200];
+        int best = 0;
+        brute(0, items, &sack1, 0, 0, capacity, state, master, best);
+        miniitems=0;//fill mini sack
+        for(int i=0; i<items; i++)
+        {
+            if(master[i])
+            {
+                minisack.names[miniitems]=sack1.names[i];
+                minisack.costs[miniitems]=sack1.costs[i];
+                minisack.values[miniitems]=sack1.values[i];
+                minisack.ratios[miniitems]=sack1.ratios[i];
+                miniitems++;
+            }
+        }
+        cout<<"results from brute force:"<<endl;
+        printsack(minisack,miniitems);
         
         destroy(sack1);
         destroy(minisack);
