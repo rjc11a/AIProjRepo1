@@ -35,7 +35,7 @@ int valueofsack(sack* a, int n)
     }
     return tot;
 }
-void copylefttoright(sack * a, sack * b, int n)
+void copylefttoright(sack * a, sack * b, int n)//unused
 {
     
 }
@@ -174,7 +174,7 @@ void exhaustive(int cur, int n, sack* s, int weight, int value, int maxweight, b
     value += s->values[cur];
     
     //if overweight then break branch
-    if(weight <= maxweight)
+    if(weight > maxweight)
         return;
     
     //not underweight,
@@ -183,6 +183,7 @@ void exhaustive(int cur, int n, sack* s, int weight, int value, int maxweight, b
     //current value is better than best value seen,
     if(value > bestval)
     {
+        cout<<"new best value: "<<value;
         bestval = value;
         for(int i=0; i<n; i++)
         {
@@ -256,7 +257,7 @@ string printsack3(sack s, int n, double d, int c)
 }
 int main()
 {
-    string out1="1. ",out2="",out3="",out4="",out5="",out6="",out7="";
+    string out1="1. ",out2="",out3="",out4="",out5="",out6="6. ",out7="7. ";
     string filename, bigline; int items,capacity; sack sack1;
     bool * master, doingbruteforce;
     ifstream fin;
@@ -267,6 +268,7 @@ int main()
     fin.open(filename.c_str());
     if(fin.is_open())
     {
+        cout<<"file opened successfully.\n";
         init_sack(sack1, 200);
         master = new bool[200];
         int cur = 0;
@@ -275,9 +277,10 @@ int main()
         out2 = "2. ";
         out2+=sto;
         capacity = stoi(sto);
-        
+        cout<<sto<<endl;
         while(!fin.eof())
         {
+            cout<<"took a line again\n";
             getline(fin,bigline);
             sto="";
             //item name
@@ -468,10 +471,20 @@ int main()
             state[i] = false;
             master[i] = false;
         }
+        
+        //        clock_t start, end;
+        clock_t brutestart, bruteend;
+
         if(doingbruteforce == true)
         {
+            double brutime = 0;
+            brutestart = clock();
             brute(0, items, &sack1, 0, 0, capacity, state, master, best);
-            
+            bruteend = clock();
+            brutime = (bruteend-brutestart) / (double) CLOCKS_PER_SEC;
+            out6 += "brute force time: ";
+            out6 += to_string(brutime);
+            out6 += "sec.";
             sack brutesack;
             int bruteitems=0;
             init_sack(brutesack, items);
@@ -484,6 +497,32 @@ int main()
             
             destroy(brutesack);
         }
+        
+        best = 0;
+        for(int i=0; i<items; i++)
+        {
+            state[i] = false;
+            master[i] = false;
+        }
+        
+        double optime = 0;
+        clock_t optstart, optend;
+        optstart = clock();
+        exhaustive(0, items, &sack1, 0, 0, capacity, state, master, best);
+        optend = clock();
+        optime = (optend-optstart) / (double) CLOCKS_PER_SEC;
+        out7 += "optimized time: ";
+        out7 += to_string(optime);
+        out7 += "sec.";
+        
+        sack optsack;
+        int optitems=0;
+        init_sack(optsack, items);
+        filterlefttoright(&sack1, items, &optsack, optitems, master);
+        ShellSort4ByName(optsack.names, optsack.costs, optsack.values, optsack.ratios, optitems);
+        out5 = "5. Results from optimized search: ";
+        out5 += printsack2(optsack, optitems);
+        printsack(optsack, optitems);
         
         destroy(sack1);
         destroy(lowcostsack);
