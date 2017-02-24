@@ -176,6 +176,11 @@ void exhaustive(int cur, int n, sack* s, int weight, int value, int maxweight, b
     //if overweight then break branch
     if(weight > maxweight)
         return;
+    //if unfruitful return
+    
+    
+    
+    
     
     //not underweight,
     list[cur]=true;
@@ -183,7 +188,6 @@ void exhaustive(int cur, int n, sack* s, int weight, int value, int maxweight, b
     //current value is better than best value seen,
     if(value > bestval)
     {
-        cout<<"new best value: "<<value;
         bestval = value;
         for(int i=0; i<n; i++)
         {
@@ -272,40 +276,42 @@ int main()
         init_sack(sack1, 200);
         master = new bool[200];
         int cur = 0;
-        string sto="";
-        getline(fin,sto);
+        string store="";
+        getline(fin,store);
         out2 = "2. ";
-        out2+=sto;
-        capacity = stoi(sto);
-        cout<<sto<<endl;
+        out2+=store;
+        capacity = stoi(store);
+        cout<<store<<endl;
         while(!fin.eof())
         {
             cout<<"took a line again\n";
             getline(fin,bigline);
-            sto="";
+            if(bigline == "")
+                break;
+            store="";
             //item name
             int ii = 0;
             for(;bigline[ii]!=','; ii++)//until char is comma
             {
-                sto += bigline[ii]; //add char to sto
+                store += bigline[ii]; //add char to sto
             }
-            sack1.names[cur] = sto;
+            sack1.names[cur] = store;
             ii++;
-            sto = "";
+            store = "";
             //1st int
             for(;bigline[ii]!=','; ii++)//until char is comma
             {
-                sto += bigline[ii]; //add char to sto
+                store += bigline[ii]; //add char to sto
             }
-            sack1.costs[cur] = stoi(sto);
+            sack1.costs[cur] = stoi(store);
             ii++;
-            sto = "";
+            store = "";
             //2nd int
             for(;bigline[ii]!=0; ii++)//until 0 termin string
             {
-                sto += bigline[ii]; //add char to sto
+                store += bigline[ii]; //add char to sto
             }
-            sack1.values[cur] = stoi(sto);
+            sack1.values[cur] = stoi(store);
             cur++;
         }
         items = cur;
