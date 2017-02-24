@@ -389,5 +389,40 @@ void ShellSort4ByDoubleDescending(std::string* a, int* b, int* c, double* d, int
         }
     }
 }
+void ShellSort4ByDoubleAscending(std::string* a, int* b, int* c, double* d, int len)
+{
+    int gaps[] = {1750, 701, 301, 132, 57, 23, 10, 4, 1};
+    int gap,curb,curc;
+    std::string cura;
+    double curd;
+    for(int g=0; g<9; g++)
+    {
+        gap = gaps[g];
+        for(int o=gap; o<len; o++)
+        {
+            cura = a[o];
+            curb = b[o];
+            curc = c[o];
+            curd = d[o];
+            //cout<<"made it, gap = "<<gap<<endl;
+            int i = o;
+            while(i>= gap && d[i-gap] > curd)//mini insertion sort
+            {
+                a[i] = a[i-gap];
+                b[i] = b[i-gap];
+                c[i] = c[i-gap];
+                d[i] = d[i-gap];
+                
+                i = i-gap;
+            }
+            //cout<<a[i]<<cur<<endl;
+            a[i] = cura;
+            b[i] = curb;
+            c[i] = curc;
+            d[i] = curd;
+            
+        }
+    }
+}
 
 #endif /* sorting_h */

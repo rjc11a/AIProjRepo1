@@ -64,7 +64,7 @@ void destroy(sack& s)
 }
 void greedy(int n, sack* s, int maxweight, bool* masterlist)
 {
-    cout<<"doing greedy, "<<n<<"items, max weight = "<<maxweight<<"\n";
+  //  cout<<"doing greedy, "<<n<<"items, max weight = "<<maxweight<<"\n";
     for(int i=0; i<n; i++)
     {
         masterlist[i] = false;
@@ -89,7 +89,7 @@ void greedy(int n, sack* s, int maxweight, bool* masterlist)
             tolwt -= s->costs[i];
         }
     }
-    cout<<"weight after greedy: "<<tolwt;
+ //   cout<<"weight after greedy: "<<tolwt;
 }
 bool partial(int n, sack* s, int maxweight, bool* masterlist, double& pct, int &extraspot)
 {
@@ -160,41 +160,45 @@ void brute(int cur, int n, sack* s, int weight, int value, int maxweight, bool* 
     list[cur]=false;
 }
 
-void exhaustive(int cur, int n, sack* s, int weight, int value, int maxweight, bool* list, bool* masterlist, int &bestval)
+void exhaustive(int cur, int n, sack* s, int weight, int value, int maxweight, bool* list, bool* masterlist, int &bestval, int rem, int& toppest)
 {
     //check cur vs int
     if(cur>=n)
         return;
-    
+    if(value + rem < toppest)
+        return;
     //exclude current
-    exhaustive(cur+1,n,s,weight,value, maxweight,list,masterlist,bestval);
+    
+    rem = rem - s->values[cur];
+    exhaustive(cur+1,n,s,weight,value, maxweight,list,masterlist,bestval, rem, toppest);
     
     //include current
     weight += s->costs[cur];
-    value += s->values[cur];
     
     //if overweight then break branch
     if(weight > maxweight)
         return;
     //if unfruitful return
+    //if current total value + 
     
     
     
-    
-    
+    value += s->values[cur];
     //not underweight,
     list[cur]=true;
     
     //current value is better than best value seen,
     if(value > bestval)
     {
+        if( value > toppest)
+            toppest = value;
         bestval = value;
         for(int i=0; i<n; i++)
         {
             masterlist[i] = list[i];
         }
     }
-    exhaustive(cur+1,n,s,weight,value, maxweight,list,masterlist,bestval);
+    exhaustive(cur+1,n,s,weight,value, maxweight,list,masterlist,bestval, rem, toppest);
     list[cur] = false;
 }
 
@@ -266,7 +270,7 @@ int main()
     bool * master, doingbruteforce;
     ifstream fin;
     ofstream fout;
-    cout<<"enter filename: ";
+    cout<<"Enter exact filename for testing: ";
     cin>>filename;
     out1 += filename;
     fin.open(filename.c_str());
@@ -284,7 +288,7 @@ int main()
         cout<<store<<endl;
         while(!fin.eof())
         {
-            cout<<"took a line again\n";
+         //   cout<<"took a line again\n";
             getline(fin,bigline);
             if(bigline == "")
                 break;
@@ -333,14 +337,14 @@ int main()
         
         
     //do phase 1: greedy low cost, high val, high ratio
-        
+        cout<<"Beginning greedy tests:\n";
         //calculate the ratios
         for(int i=0; i<items; i++)
         {
             sack1.ratios[i] = (double)sack1.values[i] / sack1.costs[i];
         }
         
-        printsack(sack1, items);
+       // printsack(sack1, items);
         
         
         int lcval, hvval, hrval;
@@ -354,20 +358,10 @@ int main()
         init_sack(lowcostsack, items);
         greedy(items, &sack1, capacity, master);
         filterlefttoright(&sack1, items, &lowcostsack, lowcostitems, master);
-//        for(int i=0; i<items; i++)
-//        {
-//            if(master[i])
-//            {
-//                minisack.names[miniitems]=sack1.names[i];
-//                minisack.costs[miniitems]=sack1.costs[i];
-//                minisack.values[miniitems]=sack1.values[i];
-//                minisack.ratios[miniitems]=sack1.ratios[i];
-//                miniitems++;
-//            }
-//        }
+
         ShellSort4ByName(lowcostsack.names, lowcostsack.costs, lowcostsack.values, lowcostsack.ratios, lowcostitems);
-        cout<<"results from greedy low cost first:\n";
-        printsack(lowcostsack, lowcostitems);
+     //   cout<<"results from greedy low cost first:\n";
+  //      printsack(lowcostsack, lowcostitems);
         lcval = valueofsack(&lowcostsack, lowcostitems);
         
         
@@ -386,8 +380,8 @@ int main()
         filterlefttoright(&sack1, items, &highvalsack, highvalitems, master);
         
         ShellSort4ByName(highvalsack.names, highvalsack.costs, highvalsack.values, highvalsack.ratios, highvalitems);
-        cout<<"results from greedy highest value first:\n";
-        printsack(highvalsack, highvalitems);
+  //      cout<<"results from greedy highest value first:\n";
+ //       printsack(highvalsack, highvalitems);
         hvval = valueofsack(&highvalsack, highvalitems);
         
         //begin highest ratio
@@ -403,8 +397,8 @@ int main()
         
         
         ShellSort4ByName(highratsack.names, highratsack.costs, highratsack.values, highratsack.ratios, highratitems);
-        cout<<"results from greedy highest ratio first:\n";
-        printsack(highratsack, highratitems);
+ //       cout<<"results from greedy highest ratio first:\n";
+ //       printsack(highratsack, highratitems);
         hrval = valueofsack(&highratsack, highratitems);
         //begin partial
 //        sack partialsack;
@@ -450,24 +444,29 @@ int main()
 
         }
     //end phase 1
+        cout<<"Greedy tests complete.\n";
+        int topper;
         out3 = "";//best greedy min boundary
         if(lcval >= hvval && lcval >= hrval)//lcval largest of the 3
         {
             out3 += "3. The greedy min boundary is the low-cost first method.\n";
             out3 += printsack2(lowcostsack, lowcostitems);
+            topper = lcval;
         }
         else if(hvval >= lcval && hvval >= hrval)//hvval (high value sack) largest of the 3
         {
             out3 += "3. The greedy min boundary is the high-value first method.\n";
             out3 += printsack2(highvalsack, highvalitems);
+            topper = hvval;
 
         }
         else//hrval is either largest or not less than the others
         {
             out3 += "3. The greedy min boundary is the high-ratio first method.\n";
             out3 += printsack2(highratsack, highratitems);
+            topper = hrval;
         }
-        cout<<"p1 done, greedy thing on next line:\n"<<out3<<endl;
+        //cout<<"p1 done, greedy thing on next line:\n"<<out3<<endl;
         bool * state = new bool[200];
         
         
@@ -483,6 +482,7 @@ int main()
 
         if(doingbruteforce == true)
         {
+            cout<<"Starting brute force method:\n";
             double brutime = 0;
             brutestart = clock();
             brute(0, items, &sack1, 0, 0, capacity, state, master, best);
@@ -497,24 +497,39 @@ int main()
             filterlefttoright(&sack1, items, &brutesack, bruteitems, master);
             
             ShellSort4ByName(brutesack.names, brutesack.costs, brutesack.values, brutesack.ratios, bruteitems);
-            cout<<"results from brute force:"<<endl;
-            printsack(brutesack,bruteitems);
+   //         cout<<"results from brute force:"<<endl;
+  //          printsack(brutesack,bruteitems);
             
             
             destroy(brutesack);
+            cout<<"Brute force complete.\n";
         }
         
+        //begin optimaled
+        
+        ShellSort4ByDoubleAscending(sack1.names, sack1.costs, sack1.values, sack1.ratios, items);
+
+        
+        
+//        for(int i=0; i<items; i++)//temp flip the values to sort descending (transform & conquer)
+//            sack1.costs[i] *= -1;
+//        ShellSort4ByFirstInt(sack1.names, sack1.costs, sack1.values, sack1.ratios, items);
+//        for(int i=0; i<items; i++)//unflip
+//            sack1.costs[i] *= -1;
+        
+        cout<<"Starting optimized method:\n";
         best = 0;
+        int rem= 0;
         for(int i=0; i<items; i++)
         {
             state[i] = false;
             master[i] = false;
+            rem += sack1.values[i];
         }
-        
         double optime = 0;
         clock_t optstart, optend;
         optstart = clock();
-        exhaustive(0, items, &sack1, 0, 0, capacity, state, master, best);
+        exhaustive(0, items, &sack1, 0, 0, capacity, state, master, best, rem , topper);
         optend = clock();
         optime = (optend-optstart) / (double) CLOCKS_PER_SEC;
         out7 += "optimized time: ";
@@ -528,8 +543,8 @@ int main()
         ShellSort4ByName(optsack.names, optsack.costs, optsack.values, optsack.ratios, optitems);
         out5 = "5. Results from optimized search: ";
         out5 += printsack2(optsack, optitems);
-        printsack(optsack, optitems);
-        
+  //      printsack(optsack, optitems);
+        cout<<"Optimized method complete.\n";
         destroy(sack1);
         destroy(lowcostsack);
         destroy(highvalsack);
@@ -539,6 +554,11 @@ int main()
         delete [] state;
         fin.close();
         cout<<endl<<out1<<endl<<out2<<endl<<out3<<endl<<out4<<endl<<out5<<endl<<out6<<endl<<out7<<endl;
+        string outfile=filename;
+        outfile.erase(outfile.end()-4,outfile.end());
+        outfile += "_results.txt";
+        fout.open(outfile.c_str());
+        fout<<out1<<endl<<out2<<endl<<out3<<endl<<out4<<endl<<out5<<endl<<out6<<endl<<out7<<endl;
     }
     else
         cout<<"failed to open file.\n";
